@@ -9,7 +9,7 @@ var account = process.argv[2]
 var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
 
-var header = ['paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account']
+var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account']
 var asset_map = {};
 var asset_list = [];
 
@@ -37,6 +37,10 @@ var register = function(a) {
 var tradesPrinter = function(t) {
     var last_cursor = "";
     t.records.forEach(function(r) {
+        if (r.type == 'account_created') {
+            console.log(to_csv(['starting_balance', r.paging_token, r.created_at, 'XLM', r.starting_balance,null,null, r.account]));
+        }
+
         if (r.type != 'trade') {
             last_cursor = r.paging_token;
             return;
@@ -47,7 +51,7 @@ var tradesPrinter = function(t) {
         register(bought_asset)
         register(sold_asset)
 
-        var line = [r.paging_token, r.created_at, bought_asset, r.bought_amount, sold_asset, r.sold_amount, r.seller];
+        var line = ['trade', r.paging_token, r.created_at, bought_asset, r.bought_amount, sold_asset, r.sold_amount, r.seller];
         for (i = 0; i < asset_list.length; i++) {
             if (bought_asset == asset_list[i]) {
                 line.push(r.bought_amount);
