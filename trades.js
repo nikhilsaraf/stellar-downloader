@@ -7,7 +7,7 @@ if (process.argv.length <= 2) {
 
 var account = process.argv[2]
 var server = new stellar.Server('https://horizon.stellar.org');
-var limit = 1;
+var limit = 200;
 
 var to_csv = function(arr) {
     s = ""
