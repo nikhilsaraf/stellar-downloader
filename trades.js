@@ -9,6 +9,7 @@ var account = process.argv[2]
 var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
 
+var header = ['paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account']
 var asset_map = {};
 var asset_list = [];
 
@@ -27,6 +28,9 @@ var register = function(a) {
     if (!(a in asset_map)) {
         asset_map[a] = 1;
         asset_list.push(a);
+        header.push(a);
+        console.error();
+        console.error(to_csv(header));
     }
 }
 
@@ -70,7 +74,7 @@ var tradesPrinter = function(t) {
 
 server.loadAccount(account).then(function(a) {
     console.log('Trades for account: ' + account);
-    console.log('paging_token,date,bought_asset,bought_amount,sell_asset,sell_amount,counterparty_account')
+    console.log(to_csv(header));
     server.effects()
         .forAccount(account)
         .order("asc")
