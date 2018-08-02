@@ -23,28 +23,20 @@ var to_csv = function(arr) {
 var tradesPrinter = function(t) {
     var last_cursor = "";
     t.records.forEach(function(r) {
-        base_asset = r.base_asset_type == 'native' ? 'XLM' : r.base_asset_code + ":" + r.base_asset_issuer;
-        counter_asset = r.counter_asset_type == 'native' ? 'XLM' : r.counter_asset_code + ":" + r.counter_asset_issuer;
-        counterparty_account = r.counter_account == account ? r.base_account : r.counter_account;
-
-        if (r.base_is_seller) {
-            sell_asset = base_asset;
-            sell_amount = r.base_amount;
-            bought_asset = counter_asset;
-            bought_amount = r.counter_amount;
-        } else {
-            sell_asset = counter_asset;
-            sell_amount = r.counter_amount;
-            bought_asset = base_asset;
-            bought_amount = r.base_amount;
+        if (r.type != 'trade') {
+            last_cursor = r.paging_token;
+            return;
         }
 
-        console.log(to_csv([r.ledger_close_time, bought_asset, bought_amount, sell_asset, sell_amount, counterparty_account]));
+        bought_asset = r.bought_asset_type == 'native' ? 'XLM' : r.bought_asset_code + ":" + r.bought_asset_issuer;
+        sold_asset = r.sold_asset_type == 'native' ? 'XLM' : r.sold_asset_code + ":" + r.sold_asset_issuer;
+
+        console.log(to_csv([r.created_at, bought_asset, r.bought_amount, sold_asset, r.sold_amount, r.seller]));
         last_cursor = r.paging_token;
     });
 
     if (last_cursor != '') {
-        server.trades()
+        server.effects()
             .forAccount(account)
             .order("asc")
             .limit(limit)
@@ -57,7 +49,7 @@ var tradesPrinter = function(t) {
 server.loadAccount(account).then(function(a) {
     console.log('Trades for account: ' + account);
     console.log('date,bought_asset,bought_amount,sell_asset,sell_amount,counterparty_account')
-    server.trades()
+    server.effects()
         .forAccount(account)
         .order("asc")
         .limit(limit)
