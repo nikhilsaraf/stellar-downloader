@@ -12,6 +12,9 @@ var limit = 200;
 var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account']
 var asset_map = {};
 var asset_list = [];
+// payment, account_created, and account_merge type payments keyed by paging_token
+var payments = {};
+var last_payment_cursor = "";
 
 var to_csv = function(arr) {
     s = ""
@@ -39,6 +42,48 @@ var register = function(a) {
         header.push(a);
         printDisplay("");
         printDisplay(to_csv(header));
+    }
+}
+
+var paymentsHandler = function(t) {
+    var last_cursor = "";
+    t.records.forEach(function(r) {
+        if (r.type == 'create_account') {
+            payments[r.paging_token] = {
+                type: r.type,
+                account: r.account,
+                funder: r.funder,
+                starting_balance: r.starting_balance
+            };
+        } else if (r.type == 'payment') {
+            asset = r.asset_type == 'native' ? 'XLM' : r.asset_code + ":" + r.asset_issuer;
+            payments[r.paging_token] = {
+                type: r.type,
+                from: r.from,
+                to: r.to,
+                asset: asset,
+                amount: r.amount
+            };
+        } else if (r.type == 'account_merge') {
+            payments[r.paging_token] = {
+                type: r.type,
+                account: r.account,
+                into: r.into,
+                amount: r.amount
+            };
+        }
+        last_cursor = r.paging_token;
+        last_payment_cursor = r.paging_token;
+    });
+
+    if (last_cursor != '') {
+        server.payments()
+            .forAccount(account)
+            .order("asc")
+            .limit(limit)
+            .cursor(last_cursor)
+            .call()
+            .then(paymentsHandler)
     }
 }
 
@@ -87,6 +132,14 @@ var tradesPrinter = function(t) {
 server.loadAccount(account).then(function(a) {
     writeHistory('Trades for account: ' + account);
     writeHistory(to_csv(header));
+
+    server.payments()
+        .forAccount(account)
+        .order("asc")
+        .limit(limit)
+        .call()
+        .then(paymentsHandler)
+
     server.effects()
         .forAccount(account)
         .order("asc")
