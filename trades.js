@@ -193,26 +193,23 @@ var tradesPrinter = async function(t) {
     }
 }
 
-server.loadAccount(account).then(function(a) {
-    writeHistory('Trades for account: ' + account);
-    writeHistory("-" + to_csv(header));
+writeHistory('Trades for account: ' + account);
+writeHistory("-" + to_csv(header));
 
-    server.payments()
+server.payments()
+    .forAccount(account)
+    .order("asc")
+    .limit(limit)
+    .call()
+    .then(paymentsHandler)
+    .catch(handleError);
+
+setTimeout(function() {
+    server.effects()
         .forAccount(account)
         .order("asc")
         .limit(limit)
         .call()
-        .then(paymentsHandler)
+        .then(tradesPrinter)
         .catch(handleError);
-
-    setTimeout(function() {
-        server.effects()
-            .forAccount(account)
-            .order("asc")
-            .limit(limit)
-            .call()
-            .then(tradesPrinter)
-            .catch(handleError);
-    }, 1000);
-})
-.catch(handleError);
+}, 1000);
