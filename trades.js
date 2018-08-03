@@ -120,7 +120,6 @@ var tradesPrinter = async function(t) {
     var last_cursor = "";
     for (var i = 0; i < t.records.length; i++) {
         r = t.records[i];
-        last_cursor = r.paging_token;
         var line = [];
         if (r.type == 'account_created') {
             // only applies to the current account being created
@@ -163,13 +162,16 @@ var tradesPrinter = async function(t) {
         } else if (r.type == 'trustline_created') {
             asset = r.asset_code + ":" + r.asset_issuer;
             register(asset, 0);
+            last_cursor = r.paging_token;
             continue;
         } else {
+            last_cursor = r.paging_token;
             continue;
         }
 
         appendAssets(line);
         writeHistory(to_csv(line));
+        last_cursor = r.paging_token;
     }
 
     if (last_cursor != '') {
