@@ -159,10 +159,13 @@ var tradesPrinter = async function(t) {
             bought_asset = r.bought_asset_type == 'native' ? 'XLM' : r.bought_asset_code + ":" + r.bought_asset_issuer;
             sold_asset = r.sold_asset_type == 'native' ? 'XLM' : r.sold_asset_code + ":" + r.sold_asset_issuer;
             line = ['trade', r.paging_token, r.created_at, bought_asset, r.bought_amount, sold_asset, r.sold_amount, r.seller];
-            register(bought_asset, parseFloat(r.bought_amount));
+            asset_map[bought_asset] += parseFloat(r.bought_amount);
             asset_map[sold_asset] -= parseFloat(r.sold_amount);
         } else if (r.type == 'account_removed') {
             line = ['end', r.paging_token, r.created_at, null, null, null, null, null];
+        } else if (r.type == 'trustline_created') {
+            asset = r.asset_code + ":" + r.asset_issuer;
+            register(asset, 0);
         } else {
             continue;
         }
