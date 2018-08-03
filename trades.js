@@ -17,7 +17,7 @@ var payments = {};
 var last_payment_cursor = "";
 
 var to_csv = function(arr) {
-    s = ""
+    s = "";
     for (var i = 0; i < arr.length; i++) {
         if (arr[i] != null) {
             s += arr[i];
@@ -68,8 +68,15 @@ var recordPayment = function(r) {
             account: r.account,
             into: r.into
         };
+    } else {
+        throw {
+            "message": "invalid payment type: " + r.type,
+            "is_create_account": r.type == 'create_account',
+            "is_payment": r.type == 'payment',
+            "is_account_merge": r.type == 'account_merge',
+            "operation": r
+        };
     }
-    // TODO raise
 }
 
 // TODO need to have this run one step ahead of the tradesPrinter
@@ -93,7 +100,7 @@ var paymentsHandler = function(t) {
 }
 
 var appendAssets = function(list) {
-    for (i = 0; i < asset_list.length; i++) {
+    for (var i = 0; i < asset_list.length; i++) {
         value = asset_map[asset_list[i]]
         list.push(value);
     }
@@ -112,40 +119,42 @@ var mapData = async function(effect_paging_token) {
     return payments[payment_pt];
 }
 
-var tradesPrinter = function(t) {
+var tradesPrinter = async function(t) {
     var last_cursor = "";
-    t.records.forEach(function(r) {
+    for (var i = 0; i < t.records.length; i++) {
+        r = t.records[i];
         last_cursor = r.paging_token;
         var line = [];
         if (r.type == 'account_created') {
             // only applies to the current account being created
-            m_data = mapData(r.paging_token);
-            line = ['genesis', r.paging_token, r.created_at, 'XLM', r.starting_balance, null, null, m_data['funder']];
+            m_data = await mapData(r.paging_token);
+            line = ['genesis', r.paging_token, r.created_at, 'XLM', r.starting_balance, null, null, m_data.funder];
             asset_map['XLM'] += r.starting_balance;
         } else if (r.type == 'account_debited') {
-            m_data = mapData(r.paging_token);
-            if (m_data['type'] == 'payment') {
-                line = ['payment_sent', r.paging_token, r.created_at, null, null, m_data['asset'], r.amount, m_data['to']];
-                asset_map[m_data['asset']] -= r.amount;
-            } else if (m_data['type'] == 'create_account') {
-                line = ['account_created', r.paging_token, r.created_at, null, null, 'XLM', m_data['starting_balance'], m_data['account']];
-                asset_map['XLM'] -= m_data['starting_balance'];
+            m_data = await mapData(r.paging_token);
+            if (m_data.type == 'payment') {
+                line = ['payment_sent', r.paging_token, r.created_at, null, null, m_data.asset, r.amount, m_data.to];
+                asset_map[m_data.asset] -= r.amount;
+            } else if (m_data.type == 'create_account') {
+                line = ['account_created', r.paging_token, r.created_at, null, null, 'XLM', m_data.starting_balance, m_data.account];
+                asset_map['XLM'] -= m_data.starting_balance;
                 // TODO need to spider this account
-            } else if (m_data['type'] == 'account_merge') {
-                line = ['payment_sent', r.paging_token, r.created_at, null, null, 'XLM', r.amount, m_data['into']];
+            } else if (m_data.type == 'account_merge') {
+                line = ['payment_sent', r.paging_token, r.created_at, null, null, 'XLM', r.amount, m_data.into];
                 asset_map['XLM'] -= r.amount;
             } 
         } else if (r.type == 'account_credited') {
-            m_data = mapData(r.paging_token);
-            if (m_data['type'] == 'payment') {
-                line = ['payment_received', r.paging_token, r.created_at, m_data['asset'], r.amount, null, null, m_data['from']];
-                asset_map[m_data['asset']] += r.amount;
-            } else if (m_data['type'] == 'account_merge') {
-                line = ['payment_received', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data['account']];
+            m_data = await mapData(r.paging_token);
+            if (m_data.type == 'payment') {
+                line = ['payment_received', r.paging_token, r.created_at, m_data.asset, r.amount, null, null, m_data.from];
+                asset_map[m_data.asset] += r.amount;
+            } else if (m_data.type == 'account_merge') {
+                line = ['payment_received', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data.account];
                 asset_map['XLM'] += r.amount;
+            } else {
+                // it is never the case that effect is account_credited and operation is created_account (that's why we have the account_created effect)
+                throw { 'operation': m_data, 'effect': r };
             }
-            // TODO raise
-            // it is never the case that effect is account_credited and operation is created_account (that's why we have the account_created effect)
         } else if (r.type == 'trade') {
             bought_asset = r.bought_asset_type == 'native' ? 'XLM' : r.bought_asset_code + ":" + r.bought_asset_issuer;
             sold_asset = r.sold_asset_type == 'native' ? 'XLM' : r.sold_asset_code + ":" + r.sold_asset_issuer;
@@ -155,12 +164,12 @@ var tradesPrinter = function(t) {
         } else if (r.type == 'account_removed') {
             line = ['end', r.paging_token, r.created_at, null, null, null, null, null];
         } else {
-            return;
+            continue;
         }
 
         appendAssets(line);
         writeHistory(to_csv(line));
-    });
+    }
 
     if (last_cursor != '') {
         server.effects()
@@ -184,10 +193,16 @@ server.loadAccount(account).then(function(a) {
         .call()
         .then(paymentsHandler)
 
-    server.effects()
-        .forAccount(account)
-        .order("asc")
-        .limit(limit)
-        .call()
-        .then(tradesPrinter);
+    setTimeout(function() {
+        server.effects()
+            .forAccount(account)
+            .order("asc")
+            .limit(limit)
+            .call()
+            .then(tradesPrinter)
+            .catch(function(e) {
+                printDisplay('error:');
+                printDisplay(e);
+            });
+    }, 1000);
 });
