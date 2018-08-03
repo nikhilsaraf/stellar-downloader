@@ -8,6 +8,7 @@ if (process.argv.length <= 2) {
 var account = process.argv[2]
 var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
+var stroops_in_unit = 10000000;
 
 var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account','XLM']
 var asset_map = {'XLM' : 0};
@@ -129,28 +130,28 @@ var tradesPrinter = async function(t) {
             // only applies to the current account being created
             m_data = await mapData(r.paging_token);
             line = ['genesis', r.paging_token, r.created_at, 'XLM', r.starting_balance, null, null, m_data.funder];
-            asset_map['XLM'] += parseFloat(r.starting_balance);
+            asset_map['XLM'] += Math.round(parseFloat(r.starting_balance) * stroops_in_unit);
         } else if (r.type == 'account_debited') {
             m_data = await mapData(r.paging_token);
             if (m_data.type == 'payment') {
                 line = ['payment_sent', r.paging_token, r.created_at, null, null, m_data.asset, r.amount, m_data.to];
-                asset_map[m_data.asset] -= parseFloat(r.amount);
+                asset_map[m_data.asset] -= Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else if (m_data.type == 'create_account') {
                 line = ['account_created', r.paging_token, r.created_at, null, null, 'XLM', m_data.starting_balance, m_data.account];
-                asset_map['XLM'] -= parseFloat(m_data.starting_balance);
+                asset_map['XLM'] -= Math.round(parseFloat(m_data.starting_balance) * stroops_in_unit);
                 // TODO need to spider this account
             } else if (m_data.type == 'account_merge') {
                 line = ['payment_sent', r.paging_token, r.created_at, null, null, 'XLM', r.amount, m_data.into];
-                asset_map['XLM'] -= parseFloat(r.amount);
+                asset_map['XLM'] -= Math.round(parseFloat(r.amount) * stroops_in_unit);
             } 
         } else if (r.type == 'account_credited') {
             m_data = await mapData(r.paging_token);
             if (m_data.type == 'payment') {
                 line = ['payment_received', r.paging_token, r.created_at, m_data.asset, r.amount, null, null, m_data.from];
-                asset_map[m_data.asset] += parseFloat(r.amount);
+                asset_map[m_data.asset] += Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else if (m_data.type == 'account_merge') {
                 line = ['payment_received', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data.account];
-                asset_map['XLM'] += parseFloat(r.amount);
+                asset_map['XLM'] += Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else {
                 // it is never the case that effect is account_credited and operation is created_account (that's why we have the account_created effect)
                 throw { 'operation': m_data, 'effect': r };
@@ -159,8 +160,8 @@ var tradesPrinter = async function(t) {
             bought_asset = r.bought_asset_type == 'native' ? 'XLM' : r.bought_asset_code + ":" + r.bought_asset_issuer;
             sold_asset = r.sold_asset_type == 'native' ? 'XLM' : r.sold_asset_code + ":" + r.sold_asset_issuer;
             line = ['trade', r.paging_token, r.created_at, bought_asset, r.bought_amount, sold_asset, r.sold_amount, r.seller];
-            asset_map[bought_asset] += parseFloat(r.bought_amount);
-            asset_map[sold_asset] -= parseFloat(r.sold_amount);
+            asset_map[bought_asset] += Math.round(parseFloat(r.bought_amount) * stroops_in_unit);
+            asset_map[sold_asset] -= Math.round(parseFloat(r.sold_amount) * stroops_in_unit);
         } else if (r.type == 'account_removed') {
             line = ['end', r.paging_token, r.created_at, null, null, null, null, null];
         } else if (r.type == 'trustline_created') {
@@ -187,7 +188,7 @@ var tradesPrinter = async function(t) {
 }
 
 server.loadAccount(account).then(function(a) {
-    writeHistory('Trades for account: ' + account);
+    writeHistory('Trades for account (all balances in stroops): ' + account);
     writeHistory(to_csv(header));
 
     server.payments()
