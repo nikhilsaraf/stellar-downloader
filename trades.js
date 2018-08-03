@@ -15,7 +15,6 @@ var asset_map = {'XLM' : 0};
 var asset_list = ['XLM'];
 // payment, account_created, and account_merge type payments keyed by paging_token
 var payments = {};
-var last_payment_cursor = "";
 
 var to_csv = function(arr) {
     s = "";
@@ -80,13 +79,11 @@ var recordPayment = function(r) {
     }
 }
 
-// TODO need to have this run one step ahead of the tradesPrinter
 var paymentsHandler = function(t) {
     var last_cursor = "";
     t.records.forEach(function(r) {
         recordPayment(r);
         last_cursor = r.paging_token;
-        last_payment_cursor = r.paging_token;
     });
 
     if (last_cursor != '') {
