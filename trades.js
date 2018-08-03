@@ -185,7 +185,7 @@ var tradesPrinter = async function(t) {
 
 server.loadAccount(account).then(function(a) {
     writeHistory('Trades for account: ' + account);
-    writeHistory(to_csv(header));
+    writeHistory("-" + to_csv(header));
 
     server.payments()
         .forAccount(account)
