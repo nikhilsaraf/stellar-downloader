@@ -45,33 +45,38 @@ var register = function(a, start_amount) {
     }
 }
 
+var recordPayment = function(r) {
+    if (r.type == 'create_account') {
+        payments[r.paging_token] = {
+            type: r.type,
+            account: r.account,
+            funder: r.funder,
+            starting_balance: r.starting_balance
+        };
+    } else if (r.type == 'payment') {
+        asset = r.asset_type == 'native' ? 'XLM' : r.asset_code + ":" + r.asset_issuer;
+        payments[r.paging_token] = {
+            type: r.type,
+            from: r.from,
+            to: r.to,
+            asset: asset,
+            amount: r.amount
+        };
+    } else if (r.type == 'account_merge') {
+        payments[r.paging_token] = {
+            type: r.type,
+            account: r.account,
+            into: r.into
+        };
+    }
+    // TODO raise
+}
+
 // TODO need to have this run one step ahead of the tradesPrinter
 var paymentsHandler = function(t) {
     var last_cursor = "";
     t.records.forEach(function(r) {
-        if (r.type == 'create_account') {
-            payments[r.paging_token] = {
-                type: r.type,
-                account: r.account,
-                funder: r.funder,
-                starting_balance: r.starting_balance
-            };
-        } else if (r.type == 'payment') {
-            asset = r.asset_type == 'native' ? 'XLM' : r.asset_code + ":" + r.asset_issuer;
-            payments[r.paging_token] = {
-                type: r.type,
-                from: r.from,
-                to: r.to,
-                asset: asset,
-                amount: r.amount
-            };
-        } else if (r.type == 'account_merge') {
-            payments[r.paging_token] = {
-                type: r.type,
-                account: r.account,
-                into: r.into
-            };
-        }
+        recordPayment(r);
         last_cursor = r.paging_token;
         last_payment_cursor = r.paging_token;
     });
@@ -94,8 +99,16 @@ var appendAssets = function(list) {
     }
 }
 
-var mapData = function(effect_paging_token) {
+var mapData = async function(effect_paging_token) {
     payment_pt = effect_paging_token.split("-")[0];
+    if (payment_pt in payments) {
+        return payments[payment_pt];
+    }
+
+    await server.operations()
+        .operation(payment_pt)
+        .call()
+        .then(recordPayment)
     return payments[payment_pt];
 }
 
@@ -104,7 +117,6 @@ var tradesPrinter = function(t) {
     t.records.forEach(function(r) {
         last_cursor = r.paging_token;
         var line = [];
-        // TODO need to check if m_data is available or not in all these cases, sometimes the corresponding operation may not exist on the current account so we will need to fetch the operation on the effect
         if (r.type == 'account_created') {
             // only applies to the current account being created
             m_data = mapData(r.paging_token);
