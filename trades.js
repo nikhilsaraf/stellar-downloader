@@ -166,6 +166,7 @@ var tradesPrinter = async function(t) {
         } else if (r.type == 'trustline_created') {
             asset = r.asset_code + ":" + r.asset_issuer;
             register(asset, 0);
+            continue;
         } else {
             continue;
         }
