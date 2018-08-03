@@ -35,6 +35,11 @@ var writeHistory = function(str) {
     console.log(str);
 }
 
+var handleError = function(e) {
+    printDisplay('error:');
+    printDisplay(e);
+}
+
 var register = function(a, start_amount) {
     if (!(a in asset_map)) {
         asset_map[a] = start_amount;
@@ -93,6 +98,7 @@ var paymentsHandler = function(t) {
             .cursor(last_cursor)
             .call()
             .then(paymentsHandler)
+            .catch(handleError);
     }
 }
 
@@ -113,6 +119,7 @@ var mapData = async function(effect_paging_token) {
         .operation(payment_pt)
         .call()
         .then(recordPayment)
+        .catch(handleError);
     return payments[payment_pt];
 }
 
@@ -181,7 +188,8 @@ var tradesPrinter = async function(t) {
             .limit(limit)
             .cursor(last_cursor)
             .call()
-            .then(tradesPrinter);
+            .then(tradesPrinter)
+            .catch(handleError);
     }
 }
 
@@ -195,6 +203,7 @@ server.loadAccount(account).then(function(a) {
         .limit(limit)
         .call()
         .then(paymentsHandler)
+        .catch(handleError);
 
     setTimeout(function() {
         server.effects()
@@ -203,9 +212,7 @@ server.loadAccount(account).then(function(a) {
             .limit(limit)
             .call()
             .then(tradesPrinter)
-            .catch(function(e) {
-                printDisplay('error:');
-                printDisplay(e);
-            });
+            .catch(handleError);
     }, 1000);
-});
+})
+.catch(handleError);
