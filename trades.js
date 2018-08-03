@@ -8,7 +8,7 @@ if (process.argv.length <= 2) {
 var account = process.argv[2]
 var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
-var stroops_in_unit = 10000000;
+var stroops_in_unit = 10000000.0;
 
 var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account','XLM']
 var asset_map = {'XLM' : 0};
@@ -103,7 +103,7 @@ var paymentsHandler = function(t) {
 var appendAssets = function(list) {
     for (var i = 0; i < asset_list.length; i++) {
         value = asset_map[asset_list[i]]
-        list.push(value);
+        list.push(value/stroops_in_unit);
     }
 }
 
@@ -188,7 +188,7 @@ var tradesPrinter = async function(t) {
 }
 
 server.loadAccount(account).then(function(a) {
-    writeHistory('Trades for account (all balances in stroops): ' + account);
+    writeHistory('Trades for account: ' + account);
     writeHistory(to_csv(header));
 
     server.payments()
