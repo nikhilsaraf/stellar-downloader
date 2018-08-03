@@ -5,4 +5,4 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-while IFS='' read -r line || [[ -n "$line" ]]; do if [[ $line == new* ]]; then F=`echo $line | cut -d' ' -f3`; node trades.js $F > "$F.csv" 2>>$1; fi; done < $1
+while IFS='' read -r line || [[ -n "$line" ]]; do if [[ $line == new* ]]; then F=`echo $line | cut -d' ' -f3`; date; echo "starting for account: $F"; echo ""; node trades.js $F > "$F.csv" 2>>$1; fi; done < $1
