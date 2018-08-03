@@ -135,7 +135,7 @@ var tradesPrinter = async function(t) {
             } else if (m_data.type == 'create_account') {
                 line = ['account_created', r.paging_token, r.created_at, null, null, 'XLM', m_data.starting_balance, m_data.account];
                 asset_map['XLM'] -= Math.round(parseFloat(m_data.starting_balance) * stroops_in_unit);
-                // TODO need to spider this account
+                printDisplay("new account: " + m_data.account);
             } else if (m_data.type == 'account_merge') {
                 line = ['payment_sent', r.paging_token, r.created_at, null, null, 'XLM', r.amount, m_data.into];
                 asset_map['XLM'] -= Math.round(parseFloat(r.amount) * stroops_in_unit);
