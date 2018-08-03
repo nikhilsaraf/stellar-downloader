@@ -40,8 +40,7 @@ var register = function(a, start_amount) {
         asset_map[a] = start_amount;
         asset_list.push(a);
         header.push(a);
-        printDisplay("");
-        printDisplay(to_csv(header));
+        writeHistory("-" + to_csv(header));
     }
 }
 
