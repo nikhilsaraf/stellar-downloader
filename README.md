@@ -2,6 +2,16 @@
 
 Download trades and payment data from the Stellar blockchain network as a CSV file for accounting purposes.
 
+## Table of Contents
+
+* [How it Works](#how-it-works)
+* [Output](#output)
+* [Getting Started](#getting-started)
+   * [Set Up](#set-up)
+   * [How to Run (Basic)](#how-to-run-basic)
+   * [How to Run (Advanced)](#how-to-run-advanced)
+* [Questions](#questions)
+
 ## How it Works
 
 Stellar Downloader uses [_Node_](https://nodejs.org/) and the [_Stellar Javascript SDK_](https://github.com/stellar/js-stellar-sdk) to pull `payments` and `effects` from **Horizon**.
