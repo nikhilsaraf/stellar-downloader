@@ -162,6 +162,7 @@ var tradesPrinter = async function(t) {
                 asset_map['XLM'] += Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else if (m_data.type == 'inflation') {
                 line = ['inflation', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data.source_account];
+                asset_map['XLM'] += Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else {
                 // it is never the case that effect is account_credited and operation is created_account (that's why we have the account_created effect)
                 throw { 'operation': m_data, 'effect': r };
