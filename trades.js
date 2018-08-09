@@ -72,12 +72,18 @@ var recordPayment = function(r) {
             account: r.account,
             into: r.into
         };
+    } else if (r.type == 'inflation') {
+        payments[r.paging_token] = {
+            type: r.type,
+            source_account: r.source_account
+        }
     } else {
         throw {
             "message": "invalid payment type: " + r.type,
             "is_create_account": r.type == 'create_account',
             "is_payment": r.type == 'payment',
             "is_account_merge": r.type == 'account_merge',
+            "is_inflation": r.type == 'inflation',
             "operation": r
         };
     }
@@ -154,6 +160,8 @@ var tradesPrinter = async function(t) {
             } else if (m_data.type == 'account_merge') {
                 line = ['payment_received', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data.account];
                 asset_map['XLM'] += Math.round(parseFloat(r.amount) * stroops_in_unit);
+            } else if (m_data.type == 'inflation') {
+                line = ['inflation', r.paging_token, r.created_at, 'XLM', r.amount, null, null, m_data.source_account];
             } else {
                 // it is never the case that effect is account_credited and operation is created_account (that's why we have the account_created effect)
                 throw { 'operation': m_data, 'effect': r };
