@@ -175,6 +175,8 @@ var tradesPrinter = async function(t) {
             asset_map[sold_asset] -= Math.round(parseFloat(r.sold_amount) * stroops_in_unit);
         } else if (r.type == 'account_removed') {
             line = ['end', r.paging_token, r.created_at, null, null, null, null, null];
+        } else if (r.type.includes('signer')) {
+            line = [r.type, r.paging_token, r.created_at, null, null, null, null, r.public_key];
         } else if (r.type == 'trustline_created') {
             asset = r.asset_code + ":" + r.asset_issuer;
             register(asset, 0);
