@@ -53,13 +53,13 @@ _Note: This script will not include any **fees** paid by the account, and as suc
 
 Run the trades.js script for your account (replace `GA...` with your account):
 
-    node trades GA...
+    node trades.js GA...
 
 You can redirect **stdout** and **stderr** to files as desired. See the [How to Run (Advanced) section below for more details](#how-to-run-advanced).
 
 ### How to Run (Advanced)
 
-This process will allow you to [**spider**](https://en.wikipedia.org/wiki/Web_crawler) an account, i.e. you can pull data from the initial account as well as all accounts created by the initial account. This will create `N` files, _1 per account_.
+This process will allow you to [**spider**](https://en.wikipedia.org/wiki/Web_crawler) an account, i.e. you can pull data from the initial account as well as all accounts created by the initial account. This will create `N` files, _1 per account_. Note the script will modify your input file, so be careful if you run it more than once.
 
 1. create a new file called `newAccounts.txt` with the initial account you want to start with on the first line as follows (replace `GA...` with your account):
     ```
