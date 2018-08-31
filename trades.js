@@ -19,10 +19,12 @@ var payments = {};
 var to_csv = function(arr) {
     s = "";
     for (var i = 0; i < arr.length; i++) {
+        if (i != 0) {
+            s += ",";
+        }
         if (arr[i] != null) {
             s += arr[i];
         }
-        s += ",";
     }
     return s;
 }
