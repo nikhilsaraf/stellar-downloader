@@ -204,7 +204,6 @@ var tradesPrinter = async function(t) {
     }
 }
 
-writeHistory('Trades for account: ' + account);
 writeHistory("-" + to_csv(header));
 
 server.payments()
