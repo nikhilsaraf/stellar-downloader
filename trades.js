@@ -6,7 +6,6 @@ var printDisplay = function(str) {
 
 if (process.argv.length != 4) {
     printDisplay("Usage: node trades.js account 'code:issuer to price quoted in USD as a JSON formatted map'");
-    printDisplay("source can be 'crypto' or 'fiat'");
     printDisplay("native XLM tokens should use \"XLM\" as the key");
     process.exit()
 }
