@@ -12,7 +12,6 @@ fi
 
 file="$1.csv"
 temp="$1-temp.csv"
-echo "post-processing file: $file"
 
 HEADER=`grep "^-" $file | tail -n 1 | tr -d '-'`
 HEADER_COMMAS=`echo "$HEADER" | awk -F"," '{print NF-1}'`

@@ -65,9 +65,9 @@ This process will allow you to [**spider**](https://en.wikipedia.org/wiki/Web_cr
     ```
     new account: GA....
     ```
-2. run the bash script `runForAccounts.sh` as follows:
+2. run the bash script `spiderAccounts.sh` as follows:
     ```shell
-    ./runForAccounts.sh newAccounts.txt
+    ./spiderAccounts.sh newAccounts.txt
     ```
 
 ## Questions

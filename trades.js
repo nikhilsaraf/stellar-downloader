@@ -5,8 +5,9 @@ var printDisplay = function(str) {
 }
 
 if (process.argv.length != 4) {
-    printDisplay("Usage: node trades.js account 'code:issuer to price quoted in USD as a JSON formatted map'");
-    printDisplay("native XLM tokens should use \"XLM\" as the key");
+    printDisplay("Usage: node trades.js account price_map");
+    printDisplay("price_map is code:issuer to price quoted in USD as a JSON formatted map, native XLM tokens should use \"XLM\" as the key");
+    printDisplay("if you don't want portfolio data or don't have price data use 'nil' as the last param");
     process.exit()
 }
 
@@ -17,13 +18,18 @@ var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
 var stroops_in_unit = 10000000.0;
 
-var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account', 'portfolio_value_xlm', 'portfolio_value_usd', 'XLM'];
+var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account'];
 var asset_map = {'XLM' : 0};
-var price_map = JSON.parse(priceFeedJsonString);
-if (!('XLM' in price_map)) {
-    printDisplay("error: 'XLM' is not in price map");
-    process.exit()
+if (priceFeedJsonString != "nil") {
+    var price_map = JSON.parse(priceFeedJsonString);
+    if (!('XLM' in price_map)) {
+        printDisplay("error: 'XLM' is not in price map");
+        process.exit()
+    }
+    header.push('portfolio_value_xlm');
+    header.push('portfolio_value_usd');
 }
+header.push('XLM');
 var asset_list = ['XLM'];
 // payment, account_created, and account_merge type payments keyed by paging_token
 var payments = {};
@@ -119,18 +125,20 @@ var paymentsHandler = function(t) {
 }
 
 var appendPortfolioValueAndAssets = function(list) {
-    var usd_value = 0;
-    for (var i = 0; i < asset_list.length; i++) {
-        if (!(asset_list[i] in price_map)) {
-            printDisplay("error: '" + asset_list[i] + "' not in price_map, exiting");
-            process.exit();
+    if (price_map) {
+        var usd_value = 0;
+        for (var i = 0; i < asset_list.length; i++) {
+            if (!(asset_list[i] in price_map)) {
+                printDisplay("error: '" + asset_list[i] + "' not in price_map, exiting");
+                process.exit();
+            }
+            value = asset_map[asset_list[i]]
+            usd_value += value * price_map[asset_list[i]]
         }
-        value = asset_map[asset_list[i]]
-        usd_value += value * price_map[asset_list[i]]
+        var xlm_value = usd_value / price_map['XLM'];
+        list.push(xlm_value/stroops_in_unit);
+        list.push(usd_value/stroops_in_unit);
     }
-    var xlm_value = usd_value / price_map['XLM'];
-    list.push(xlm_value/stroops_in_unit);
-    list.push(usd_value/stroops_in_unit);
 
     for (var i = 0; i < asset_list.length; i++) {
         value = asset_map[asset_list[i]]
