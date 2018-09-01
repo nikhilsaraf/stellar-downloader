@@ -8,7 +8,7 @@ if (process.argv.length != 4) {
     printDisplay("Usage: node trades.js account price_map");
     printDisplay("price_map is code:issuer to price quoted in USD as a JSON formatted map, native XLM tokens should use \"XLM\" as the key");
     printDisplay("if you don't want portfolio data or don't have price data use 'nil' as the last param");
-    process.exit()
+    process.exit(1)
 }
 
 var account = process.argv[2];
@@ -24,7 +24,7 @@ if (priceFeedJsonString != "nil") {
     var price_map = JSON.parse(priceFeedJsonString);
     if (!('XLM' in price_map)) {
         printDisplay("error: 'XLM' is not in price map");
-        process.exit()
+        process.exit(2)
     }
     header.push('portfolio_value_xlm');
     header.push('portfolio_value_usd');
@@ -130,7 +130,7 @@ var appendPortfolioValueAndAssets = function(list) {
         for (var i = 0; i < asset_list.length; i++) {
             if (!(asset_list[i] in price_map)) {
                 printDisplay("error: '" + asset_list[i] + "' not in price_map, exiting");
-                process.exit();
+                process.exit(3);
             }
             value = asset_map[asset_list[i]]
             usd_value += value * price_map[asset_list[i]]
