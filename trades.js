@@ -1,17 +1,30 @@
 var stellar = require('stellar-sdk')
 
-if (process.argv.length <= 2) {
-    printDisplay("need to pass in the account as a command line argument");
+var printDisplay = function(str) {
+    console.error(str);
+}
+
+if (process.argv.length != 4) {
+    printDisplay("Usage: node trades.js account 'code:issuer to price quoted in USD as a JSON formatted map'");
+    printDisplay("source can be 'crypto' or 'fiat'");
+    printDisplay("native XLM tokens should use \"XLM\" as the key");
     process.exit()
 }
 
-var account = process.argv[2]
+var account = process.argv[2];
+var priceFeedJsonString = process.argv[3];
+
 var server = new stellar.Server('https://horizon.stellar.org');
 var limit = 200;
 var stroops_in_unit = 10000000.0;
 
-var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account','XLM']
+var header = ['type','paging_token','date','bought_asset','bought_amount','sell_asset','sell_amount','counterparty_account', 'portfolio_value_xlm', 'portfolio_value_usd', 'XLM'];
 var asset_map = {'XLM' : 0};
+var price_map = JSON.parse(priceFeedJsonString);
+if (!('XLM' in price_map)) {
+    printDisplay("error: 'XLM' is not in price map");
+    process.exit()
+}
 var asset_list = ['XLM'];
 // payment, account_created, and account_merge type payments keyed by paging_token
 var payments = {};
@@ -27,10 +40,6 @@ var to_csv = function(arr) {
         }
     }
     return s;
-}
-
-var printDisplay = function(str) {
-    console.error(str);
 }
 
 var writeHistory = function(str) {
@@ -110,7 +119,16 @@ var paymentsHandler = function(t) {
     }
 }
 
-var appendAssets = function(list) {
+var appendPortfolioValueAndAssets = function(list) {
+    var usd_value = 0;
+    for (var i = 0; i < asset_list.length; i++) {
+        value = asset_map[asset_list[i]]
+        usd_value += value * price_map[asset_list[i]]
+    }
+    var xlm_value = usd_value / price_map['XLM'];
+    list.push(xlm_value/stroops_in_unit);
+    list.push(usd_value/stroops_in_unit);
+
     for (var i = 0; i < asset_list.length; i++) {
         value = asset_map[asset_list[i]]
         list.push(value/stroops_in_unit);
@@ -189,7 +207,7 @@ var tradesPrinter = async function(t) {
             continue;
         }
 
-        appendAssets(line);
+        appendPortfolioValueAndAssets(line);
         writeHistory(to_csv(line));
         last_cursor = r.paging_token;
     }
