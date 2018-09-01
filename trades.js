@@ -121,6 +121,10 @@ var paymentsHandler = function(t) {
 var appendPortfolioValueAndAssets = function(list) {
     var usd_value = 0;
     for (var i = 0; i < asset_list.length; i++) {
+        if (!(asset_list[i] in price_map)) {
+            printDisplay("error: '" + asset_list[i] + "' not in price_map, exiting");
+            process.exit();
+        }
         value = asset_map[asset_list[i]]
         usd_value += value * price_map[asset_list[i]]
     }
