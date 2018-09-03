@@ -3,11 +3,25 @@
 # script to run for all the accounts in a markets.csv file that includes price feeds for each asset
 # depends on having https://github.com/nikhilsaraf/stellar-go/tree/master/test_secret installed as a binary on the machine
 # this dependence can be avoided by using a file that replaces the secret keys with accounts (and updating this script accordingly)
+# depends on python for json parsing tentatively so we can parse out the price from currencylayer, since it returns the JSON in a single line
 
 if [[ $# -ne 1 ]]
 then
     echo "Usage: $0 filename_markets.csv"
     exit 1
+fi
+
+if [ -f ./.env ]
+then
+    echo ".env file found, sourcing file"
+    source ./.env
+    echo ""
+fi
+
+if [ -z "$CURRENCY_LAYER_API_TOKEN" ]
+then
+    echo "please set the environment variable CURRENCY_LAYER_API_TOKEN, you can use the .env file for this. See https://currencylayer.com/ for more information on how to get an API token."
+    exit 2
 fi
 
 date
@@ -24,12 +38,11 @@ do
     if [[ $feed_type == "crypto" ]]
     then
         token_price=`curl -s "https://api.coinmarketcap.com/v1/ticker/$feed_token/" | grep price_usd | cut -d '"' -f4`
-        echo "    ... fetched token price (quoted in USD) for \"$code:$issuer\": \$$token_price"
     elif [[ $feed_type == "fiat" ]]
     then
-        # TODO
-        token_price=1
+        token_price=`curl -s "http://apilayer.net/api/live?access_key=$CURRENCY_LAYER_API_TOKEN&currencies=$feed_token" | python -m json.tool | grep "USD$feed_token" | cut -d ':' -f2 | tr -d ' '`
     fi
+    echo "    ... fetched token price (quoted in USD) for \"$code:$issuer\": \$$token_price"
 
     echo "downloading for account: $ACCOUNT ..."
     node trades.js $ACCOUNT "{\"XLM\":$xlm_price, \"$code:$issuer\": $token_price}" > "$ACCOUNT.csv"
