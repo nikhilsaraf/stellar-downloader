@@ -9,7 +9,8 @@ Download trades and payment data from the Stellar blockchain network as a CSV fi
 * [Getting Started](#getting-started)
    * [Set Up](#set-up)
    * [How to Run (Basic)](#how-to-run-basic)
-   * [How to Run (Advanced)](#how-to-run-advanced)
+   * [How to Run (Advanced I)](#how-to-run-advanced-i)
+   * [How to Run (Advanced II)](#how-to-run-advanced-ii)
 * [Questions](#questions)
 
 ## How it Works
@@ -57,7 +58,7 @@ Run the trades.js script for your account (replace `GA...` with your account):
 
 You can redirect **stdout** and **stderr** to files as desired. See the [How to Run (Advanced) section below for more details](#how-to-run-advanced).
 
-### How to Run (Advanced)
+### How to Run (Advanced I)
 
 This process will allow you to [**spider**](https://en.wikipedia.org/wiki/Web_crawler) an account, i.e. you can pull data from the initial account as well as all accounts created by the initial account. This will create `N` files, _1 per account_. Note the script will modify your input file, so be careful if you run it more than once.
 
@@ -68,6 +69,33 @@ This process will allow you to [**spider**](https://en.wikipedia.org/wiki/Web_cr
 2. run the bash script `spiderAccounts.sh` as follows:
     ```shell
     ./spiderAccounts.sh newAccounts.txt
+    ```
+
+### How to Run (Advanced II)
+
+This process will allow you to run the downloader script for all your market making accounts in a single command and the output files will include the portfolio balances in XLM and USD using a reference price provided by you in the input file. This will **not** _spider_ any of the accounts and will **not** modify your original file.
+
+1. create a new file called `markets.csv` detailing all your accounts using the following columns (no header line):
+
+    - code: the asset_code on the stellar network
+    - issuer: the issuer's address
+    - name: any friendly name you want to assign to the token or issuer
+    - trader_secret: this will be converted to your trader account, this depends on the [test_secret script](https://github.com/nikhilsaraf/stellar-go/tree/master/test_secret), see `runForMarketsCsv.sh` for more information.
+    - blank: make sure to leave an empty value here
+    - blank: make sure to leave an empty value here
+    - blank: make sure to leave an empty value here
+    - feed_type: crypto or fiat; takes the reference price from [coinmarketcap](https://coinmarketcap.com/) and [currencylayer](https://currencylayer.com/) accordingly
+    - feed_token: USD / bitcoin / ethereum / etc.; see [coinmarketcap](https://coinmarketcap.com) and [currencylayer](https://currencylayer.com/) for the values to use here
+    - blank: make sure to leave an empty value here
+
+2. set the `CURRENCY_LAYER_API_TOKEN`, you can use a .env file to do this, like so (replace `...` with your token):
+    ```shell
+    export CURRENCY_LAYER_API_TOKEN=...
+    ```
+
+3. run the bash script `runForMarketsCsv.sh` as follows:
+    ```shell
+    ./runForMarketsCsv.sh markets.csv
     ```
 
 ## Questions
