@@ -21,14 +21,14 @@ do
 
     echo "appending data for account $ACCOUNT"
     FILE=$ACCOUNT.csv
-    tail -n +2 $FILE | cut -d',' -f2,3,9,10 >> $OUTPUT
+    tail -n +2 $FILE | cut -d',' -f2,3,9,10 | xargs -I {} echo "$ACCOUNT,{}" >> $OUTPUT
     echo "    ... finished appending data for account $ACCOUNT"
     echo ""
 done
 
 echo "consolidating files ..."
-echo "paging_token,date,portfolio_value_xlm,portfolio_value_usd" > $OUTPUT_TEMP
-cat $OUTPUT | sort -k1 -t, >> $OUTPUT_TEMP
+echo "account,paging_token,date,portfolio_value_xlm,portfolio_value_usd" > $OUTPUT_TEMP
+cat $OUTPUT | sort -k2 -t, >> $OUTPUT_TEMP
 mv $OUTPUT_TEMP $OUTPUT
 echo "   ... finished consolidating files"
 echo "done: $OUTPUT"
