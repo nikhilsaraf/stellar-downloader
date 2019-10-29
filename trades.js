@@ -168,11 +168,20 @@ var tradesPrinter = async function(t) {
         if (r.type == 'account_created') {
             // only applies to the current account being created
             m_data = await mapData(r.paging_token);
+            if (!m_data) {
+                console.log('skipping record because m_data was missing: ' + JSON.stringify(r));
+                last_cursor = r.paging_token;
+                continue;
+            }
             line = ['genesis', r.paging_token, r.created_at, 'XLM', r.starting_balance, null, null, m_data.funder];
             asset_map['XLM'] += Math.round(parseFloat(r.starting_balance) * stroops_in_unit);
         } else if (r.type == 'account_debited') {
             m_data = await mapData(r.paging_token);
-            if (m_data.type == 'payment') {
+            if (!m_data) {
+                console.log('skipping record because m_data was missing: ' + JSON.stringify(r));
+                last_cursor = r.paging_token;
+                continue;
+            } else if (m_data.type == 'payment') {
                 line = ['payment_sent', r.paging_token, r.created_at, null, null, m_data.asset, r.amount, m_data.to];
                 asset_map[m_data.asset] -= Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else if (m_data.type == 'create_account') {
@@ -185,7 +194,11 @@ var tradesPrinter = async function(t) {
             } 
         } else if (r.type == 'account_credited') {
             m_data = await mapData(r.paging_token);
-            if (m_data.type == 'payment') {
+            if (!m_data) {
+                console.log('skipping record because m_data was missing: ' + JSON.stringify(r));
+                last_cursor = r.paging_token;
+                continue;
+            } else if (m_data.type == 'payment') {
                 line = ['payment_received', r.paging_token, r.created_at, m_data.asset, r.amount, null, null, m_data.from];
                 asset_map[m_data.asset] += Math.round(parseFloat(r.amount) * stroops_in_unit);
             } else if (m_data.type == 'account_merge') {
