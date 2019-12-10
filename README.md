@@ -52,11 +52,16 @@ _Note: This script will not include any **fees** paid by the account, and as suc
 
 ### How to Run (Basic)
 
-Run the trades.js script for your account (replace `GA...` with your account):
+The script takes two arguments, your account and a price_map. The price map is optional and can be replaced with `nil`
+So you can run the trades.js script for your account as (replace `GA...` with your account):
 
-    node trades.js GA...
+    node trades.js GA... nil
 
-You can redirect **stdout** and **stderr** to files as desired. See the [How to Run (Advanced) section below for more details](#how-to-run-advanced).
+You can redirect **stdout** and **stderr** to files as desired. 
+
+    node trades.js GA... nil > outfile 2 > errorfile
+    
+See the [How to Run (Advanced) section below for more details](#how-to-run-advanced).
 
 ### How to Run (Advanced I)
 
